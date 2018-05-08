@@ -11,7 +11,7 @@ def read_file(file_name):
     return content
 
 def main():
-    chdir(os.getcwd()+"\COMP9334-assignment2\sample_1") 
+    os.chdir(os.getcwd()+"\COMP9334-assignment2\sample_1") 
     no_tests = int(read_file("num_tests.txt")[0])
     for i in range(1,no_tests+1):
         mode = read_file("mode_{0}.txt".format(i))[0]
