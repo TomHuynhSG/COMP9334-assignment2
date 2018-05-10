@@ -28,9 +28,16 @@ def main():
         setup_time = para[1]
         delayedoff_time = para[2]
 
+        if mode == 'random':
+            time_end = para[3]
+        else:
+            time_end = None
+
         arrival = read_file_float("arrival_{0}.txt".format(i))
         service = read_file_float("service_{0}.txt".format(i))
-
+        if mode == 'random':
+            arrival = arrival[0]
+            service = service[0]
 
         print ("Test {0}".format(i))
         print ("Mode: {0}".format(mode))
@@ -40,7 +47,7 @@ def main():
         print ("Arrival time: {0}".format(arrival))
         print ("Service time: {0}".format(service))
         
-        si.simulation(mode, arrival, service, m, setup_time, delayedoff_time)
+        si.simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end)
         
         print()
 
