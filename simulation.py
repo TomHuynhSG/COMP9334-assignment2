@@ -11,7 +11,7 @@
 
 
 import heapq
-
+import numpy as np
 
 
 def find_longest_server_type(servers,events,type):
@@ -64,9 +64,13 @@ def pop_first_marked(queue):
             queue.remove(job)
             return job
 
-def simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end="Na"):
+def simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end):
     clock = 0.0
     total_response_time=0.0
+
+
+    if mode == 'random':
+        haha
 
     n_jobs = len(arrival)
     departures=[]
