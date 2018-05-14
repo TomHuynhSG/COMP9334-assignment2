@@ -19,7 +19,7 @@ def read_file_float(file_name):
     return content
 
 def main():
-    os.chdir(os.getcwd()+"\COMP9334-assignment2\sample_1") 
+    os.chdir(os.getcwd()+"\sample_3") 
     no_tests = int(read_file_float("num_tests.txt")[0])
     for i in range(1,no_tests+1):
         mode = read_file_string("mode_{0}.txt".format(i))[0]
@@ -46,10 +46,15 @@ def main():
         print ("Delayed off time: {0}".format(delayedoff_time))
         print ("Arrival time: {0}".format(arrival))
         print ("Service time: {0}".format(service))
+        if mode == 'random':
+            print ("Time end: {0}".format(time_end))
+
+        (n_finish_jobs,mean_response_time) = si.simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end,i)
+        # for i in range(int(delayedoff_time)):
+        #     (n_finish_jobs,mean_response_time) = si.simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end,i)
+        #     delayedoff_time -= 1
+
         
-        si.simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end)
-        
-        print()
 
 if __name__ == "__main__":
     main()
