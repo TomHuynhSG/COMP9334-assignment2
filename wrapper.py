@@ -7,18 +7,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import t
 
+# seed start and end will define a range of seed for the program to run
+# Note: to run 1 seed then put both numbers to be the same
 seed_start=5
-seed_end=10
-tc_trials=[0] #Default for only one Tc value run
-#tc_trials=[0,3,7,9,10,11,12,13,15,17,20,25,30,40,50,100] #addition_to_paraTc
-transient_cutoff_index = 1500
+seed_end=5
+# how much Tc will be increase from default Tc from para to try
+# Note: they will be addition to input Tc
+# if only use input Tc, put [0]
+tc_trials=[0]
+#tc_trials=[0,3,7,9,10,11,12,13,15,17,20,25,30,40,50,100] #full_experiment for variety of Tc
+
 np.random.seed(seed_start)
+
+#max index where transident part will be remove from response time array
+transient_cutoff_max=1500
 DEBUG = False
 
 # Try to use one at a time to display graph
 DISPLAY_TRANSIENT_ONE_TC_GRAPH = False  #works well one tc_trials (the last element of tc_trials)
 DISPLAY_RESPONSETIME_Tc_GRAPH = False
 DISPLAY_SPREAD_DIFFERNT_Tc_GRAPH= False
+CALCULATE_DIFFERENCE_SPREAD = False
 
 def read_file_string(file_name):
     with open(file_name) as f:
@@ -110,6 +119,11 @@ def main():
                     
                 (n_finish_jobs, mean_response_time, response_times, running_means) = si.simulation(mode, arrival, service, m, setup_time, update_delayoff_time, time_end,test)
 
+                if len(response_times) > transient_cutoff_max:
+                    transient_cutoff_index = transient_cutoff_max
+                else:
+                    transient_cutoff_index = 0
+
                 stable_response_times = response_times[transient_cutoff_index:]
                 mean_stable_response_time = sum(stable_response_times)/len(stable_response_times)
 
@@ -158,7 +172,7 @@ def main():
             plt.plot([], [], ' ', label="seed start = " + str(seed_start) + ", seed_end = " + str(seed_end))
             for delayoff_key in response_times_different_tc_seeds:
                 response_times_per_tc = response_times_different_tc_seeds[delayoff_key]
-                plt.scatter([delayoff_key]*len(response_times_per_tc), response_times_per_tc, label='response time for tc = '+str(delayoff_key))
+                plt.scatter([delayoff_key]*len(response_times_per_tc), response_times_per_tc, s=[5]*len(response_times_per_tc), label='response time for tc = '+str(delayoff_key))
 
                 sample_mean = sum(response_times_per_tc)/len(response_times_per_tc)
                 n = (seed_end-seed_start+1)
@@ -172,6 +186,7 @@ def main():
                 upper_bound = sample_mean + t_dis*sample_standard_deviation/math.sqrt(n)
                 
                 if DEBUG:
+                    print ("Spread of a Tc")
                     print("Tc :"+str(delayoff_key))
                     print("Lower Bound:" + str(lower_bound))
                     print("Sample Mean" + str(sample_mean))
@@ -179,9 +194,36 @@ def main():
 
             plt.xlabel('Delayoff Time', fontsize=15)
             plt.ylabel('Mean response time', fontsize=15)
-            plt.legend()
+            plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
             plt.show()
 
+        if CALCULATE_DIFFERENCE_SPREAD:
+
+            #Assume the first one is baseline and exist
+            baseline_mrts = response_times_different_tc_seeds[0.1] 
+            for delayoff_key in response_times_different_tc_seeds:
+                compare_mrts = response_times_different_tc_seeds[delayoff_key]
+                assert (len(baseline_mrts)==len(compare_mrts))
+                difference_mrts=[]
+                for i in range(len(baseline_mrts)):
+                    difference_mrts.append(compare_mrts[i] - baseline_mrts[i])
+
+                sample_mean = sum(difference_mrts)/len(difference_mrts)
+                n = (seed_end-seed_start+1)
+                sum_deviation = 0.0
+                for difference_mrt in difference_mrts:
+                    sum_deviation+=(sample_mean-difference_mrt)**2
+                sample_standard_deviation = math.sqrt( sum_deviation/( n-1))  
+                alpha = 0.05
+                t_dis = t.ppf(1-alpha/2, (n-1))
+                lower_bound = sample_mean - t_dis*sample_standard_deviation/math.sqrt(n)
+                upper_bound = sample_mean + t_dis*sample_standard_deviation/math.sqrt(n)
+                if DEBUG:
+                    print ("Spread difference from the baseline")
+                    print("Tc :"+str(delayoff_key))
+                    print("Lower Bound:" + str(lower_bound))
+                    print("Sample Mean" + str(sample_mean))
+                    print("Upper Bound" + str(upper_bound))
 
 if __name__ == "__main__":
     main()

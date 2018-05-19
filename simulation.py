@@ -12,6 +12,7 @@
 
 import heapq
 DEBUG = False
+WRITE_FILE = True
 
 
 def find_longest_server_type(servers,events,type):
@@ -186,16 +187,19 @@ def simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end,
     if DEBUG:
         print ("Mean Response Time: {0:.3f}".format(mean_response_time))
     
-    with open('mrt_{0}.txt'.format(test_no), 'w') as output_file:
-        output_file.write("{0:.3f}".format(mean_response_time))
+    if WRITE_FILE:
+        with open('mrt_{0}.txt'.format(test_no), 'w') as output_file:
+            output_file.write("{0:.3f}".format(mean_response_time))
 
     
-    output_file = open('departure_{0}.txt'.format(test_no),"w") 
+     
     departures.sort(key=lambda x: x[1])
-    for i in range(n_finish_jobs):
-        #print ("{0:.3f}\t{1:.3f}".format(departures[i][0],departures[i][1]))
-        output_file.write("{0:.3f}\t{1:.3f}\n".format(departures[i][0],departures[i][1]))
-    output_file.close() 
+
+    if WRITE_FILE:
+        output_file = open('departure_{0}.txt'.format(test_no),"w")
+        for i in range(n_finish_jobs):
+            output_file.write("{0:.3f}\t{1:.3f}\n".format(departures[i][0],departures[i][1]))
+        output_file.close() 
 
     # print("Depatures:")
     # print("Response times:")
