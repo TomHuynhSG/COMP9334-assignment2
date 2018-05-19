@@ -11,8 +11,8 @@
 
 
 import heapq
-import numpy as np
-np.random.seed(1)
+DEBUG = False
+
 
 def find_longest_server_type(servers,events,type):
     final_id=None
@@ -26,22 +26,37 @@ def find_longest_server_type(servers,events,type):
     return final_id
 
 def find_server_time_type(events,server_id,type):
-    for [time, e_Type, event] in events:
-        if (event['type']==type) and (event['id']==server_id):
-            return time
+    for [e_time, e_type, e_id] in events:
+        if (e_type==type) and (e_id==server_id):
+            return e_time
     return None
 
+def number_setup_servers(servers):
+    n_setup_servers=0
+    for id in servers:
+        if servers[id]['status']=='setup':
+            n_setup_servers+= 1
+    return n_setup_servers
+
+def number_marked_jobs(queue):
+    n_marked_jobs=0
+    for job in queue:
+        if job['status']=='MARKED':
+            n_marked_jobs+= 1
+    return n_marked_jobs
+
+
 def remove_event(events,type,id):
-    for [time, e_type, event] in events:
-        if (event['type']==type and event['id']==id):
-            events.remove([time, e_type,event])
+    for [e_time, e_type, e_id] in events:
+        if (e_type==type and e_id==id):
+            events.remove([e_time, e_type, e_id])
             heapq.heapify(events)
 
 def wait_for_server(clock,servers,queue,events,job_id,setup_time):
     for id in servers:
         if servers[id]['status']=='off':
             servers[id]['status']='setup'
-            heapq.heappush(events, [clock + setup_time, 'setup' ,{'type':'setup', 'id':id}    ] )
+            heapq.heappush(events, [clock + setup_time, 'setup', id ] )
             queue.append({'id':job_id,'status':'MARKED'})
             return 'MARKED'
 
@@ -52,55 +67,37 @@ def wait_for_server(clock,servers,queue,events,job_id,setup_time):
 def use_delay_server(clock,servers,jobs,events,server_id,job_id):
     remove_event(events,'delay',server_id)
     servers[server_id]['status']='busy'
-    heapq.heappush(events, [clock+jobs[job_id]['service'], 'departure',{'type':'departure', 'id':[server_id,job_id]} ] )
+    heapq.heappush(events, [clock+jobs[job_id]['service'], 'departure', [server_id,job_id] ] )
 
 def use_free_server(clock,servers,jobs,events,server_id,job_id):
     servers[server_id]['status']='busy'
-    heapq.heappush(events, [clock+jobs[job_id]['service'], 'departure',{'type':'departure', 'id':[server_id,job_id]} ] )
+    heapq.heappush(events, [clock+jobs[job_id]['service'], 'departure', [server_id,job_id] ] )
 
 def pop_first_marked(queue):
     for job in queue:
         if job['status']=='MARKED':
             queue.remove(job)
             return job
+    return None
+
+def find_first_unmarked(queue):
+    for job in queue:
+        if job['status']=='UNMARKED':
+            return job
+    return None
 
 def simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end, test_no):
     clock = 0.0
     total_response_time=0.0
 
-
-    if mode == 'random':
-        arrival_rate = arrival
-        service_rate = service
-        arrival = np.random.poisson(1/arrival_rate, int(time_end))
-        arrival = np.cumsum(arrival)
-        arrival = [a for a in arrival if (a <= time_end)]     
-        n_jobs = len(arrival)
-        service=[]
-        
-        for i in range(n_jobs):
-            service.append (round(np.random.exponential(scale=1/service_rate)+np.random.exponential(scale=1/service_rate)+np.random.exponential(scale=1/service_rate), 3))
-        
-        arrival = [10, 24, 34, 48, 60, 77, 91, 105, 115]
-        service = [12.669, 7.333, 6.527, 6.911, 5.79, 4.087, 4.013, 5.917, 5.134]
-        n_jobs = len(arrival)
-        print ("Random arrival: {0}".format(arrival))
-        print ("Random servive: {0}".format(service))
-
-
-    else: 
-        n_jobs = len(arrival)
-    
     departures=[]
-
     servers = {}
     jobs = {}
     queue = []
     events = []
+
     n_finish_jobs = 0
-    
-    
-    
+    n_jobs = len(arrival)
     
     # events { time : ? ,type: "arrive, depart, setup, delay"}
 
@@ -108,68 +105,105 @@ def simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end,
     for i in range(1,m+1):
         servers[i]={'status':'off'}  #server status based on server its id (off,busy,setup,delay)
     
-    # initialize jobs
+    # initialize jobs (arrival_time, service_time)
     for i in range(n_jobs):
         jobs[i+1]={"arrival":arrival[i],"service":service[i]}
     
-    # initialize arrival events
+    # initialize arrival events (arrival_time, event_type, {event_type, related_id}) 
     for id in jobs:
-        heapq.heappush(events, [jobs[id]['arrival'], 'arrival', {'type':'arrival', 'id':id}    ] )
+        heapq.heappush(events, [jobs[id]['arrival'], 'arrival', id ] )
 
-    print(servers)
-    print(jobs)
-    print(events)
+    # print(servers)
+    # print(jobs)
+    # print(events)
     
     while len(events)!=0:
-        [time, e_type, event]=heapq.heappop(events)
-        clock=time
+        [e_time, e_type, e_id]=heapq.heappop(events)
+        clock=e_time
+
+        assert(number_setup_servers(servers)==number_marked_jobs(queue))
+
         if (mode == 'random') and (clock>time_end):
             break
-        if event['type']=='arrival':
-            job_id = event['id']
+        if e_type=='arrival':
+            job_id = e_id
             free_server_id = find_longest_server_type(servers,events,'delay')
             if free_server_id==None:
                 wait_for_server(clock,servers,queue,events,job_id,setup_time)
             else:
                 use_delay_server(clock,servers,jobs,events,free_server_id,job_id)
         
-        if event['type']=='departure':
-            [servers_id,job_id] = event['id']
-            departures.append(clock)
-            total_response_time += clock - jobs[job_id]['arrival']
+        if e_type=='departure':
+            [server_id, job_id] = e_id
+            departures.append([jobs[job_id]['arrival'],clock])
             n_finish_jobs+= 1
 
             if len(queue)==0:
-                servers[servers_id]['status']='delay'
-                heapq.heappush(events, [clock+delayedoff_time, 'delay',{'type':'delay', 'id':server_id} ] )
+                servers[server_id]['status']='delay'
+                heapq.heappush(events, [clock + delayedoff_time, 'delay', server_id ] )
             else:
                 job = queue.pop(0)
                 use_free_server(clock,servers,jobs,events,server_id,job['id'])
                 if job['status']=='MARKED':
-                    setup_server_id = find_longest_server_type(servers,events,'setup')
-                    servers[setup_server_id]['status']='off'
-                    remove_event(events,'setup',setup_server_id)
+                    unmarked_job = find_first_unmarked(queue)
+                    if (unmarked_job == None):
+                        setup_server_id = find_longest_server_type(servers,events,'setup')
+                        servers[setup_server_id]['status']='off'
+                        remove_event(events,'setup',setup_server_id)
+                    else:
+                        unmarked_job['status'] = 'MARKED'
 
-
-        if event['type']=='setup':
-            server_id=event['id']
+        if e_type=='setup':
+            server_id = e_id
             job = pop_first_marked(queue)
-            use_free_server(clock,servers,jobs,events,server_id,job['id'])
+            use_free_server(clock,servers,jobs,events, server_id, job['id'])
         
-        if event['type']=='delay':
-            server_id=event['id']
-            servers[server_id]['status']=='off'
+        if e_type=='delay':
+            server_id=e_id
+            servers[server_id]['status']='off'
     #output 2 files
 
+    running_times = []
+    running_means = []
+    response_times = []
+
+    for departure in departures:
+        response_times.append(departure[1] - departure[0])
+    
+    total_response_time = sum(response_times)
     mean_response_time = total_response_time/n_jobs
-    print ("Mean Response Time: {0:.3f}".format(mean_response_time))
+
+
+    for i in range(len(response_times)):
+        if i == 0:
+            running_times.append(response_times[i])
+        else:
+            running_times.append(running_times[-1]+response_times[i])
+    
+    for i in range(len(running_times)):
+        running_means.append(running_times[i]/(i+1))
+
+    if DEBUG:
+        print ("Mean Response Time: {0:.3f}".format(mean_response_time))
+    
     with open('mrt_{0}.txt'.format(test_no), 'w') as output_file:
         output_file.write("{0:.3f}".format(mean_response_time))
 
+    
     output_file = open('departure_{0}.txt'.format(test_no),"w") 
+    departures.sort(key=lambda x: x[1])
     for i in range(n_finish_jobs):
-        print ("{0:.3f}\t{1:.3f}".format(arrival[i],departures[i]))
-        output_file.write("{0:.3f}\t{1:.3f}\n".format(arrival[i],departures[i]))
+        #print ("{0:.3f}\t{1:.3f}".format(departures[i][0],departures[i][1]))
+        output_file.write("{0:.3f}\t{1:.3f}\n".format(departures[i][0],departures[i][1]))
     output_file.close() 
 
-    return  (n_finish_jobs,mean_response_time)
+    # print("Depatures:")
+    # print("Response times:")
+    # for response_time in response_times:
+    #     print ("{0:.3f}".format(response_time))
+
+    # print("Running means:")
+    # for running_mean in running_means:
+    #     print ("{0:.3f}".format(running_mean))
+
+    return  (n_finish_jobs,mean_response_time,response_times,running_means)
