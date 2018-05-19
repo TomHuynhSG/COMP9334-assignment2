@@ -1,17 +1,18 @@
 # Name: Nguyen Minh Thong Huynh
 # ID: z5170141
 
-#mode # random or trace
-#arrival  #lamda #arrival rate of the jobs
-#service  #mu 
-#m #number of servers
-#setup_time
-#delayedoff_time #Tc
-#time_end #stops the simulation if the master clock exceeds this value
+###################################################################################################
+# This is helper simulation file for wrapper.py
+# Do not run this file as main function
+###################################################################################################
 
 
 import heapq
+
+# debug allowing functions to print out variable for debugging purpose
 DEBUG = False
+
+# boolean to write output files or not (speed up experiments or drawing graph)
 WRITE_FILE = True
 
 
@@ -87,6 +88,7 @@ def find_first_unmarked(queue):
             return job
     return None
 
+
 def simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end, test_no):
     clock = 0.0
     total_response_time=0.0
@@ -100,32 +102,33 @@ def simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end,
     n_finish_jobs = 0
     n_jobs = len(arrival)
     
-    # events { time : ? ,type: "arrive, depart, setup, delay"}
 
     # initialize servers
     for i in range(1,m+1):
         servers[i]={'status':'off'}  #server status based on server its id (off,busy,setup,delay)
     
-    # initialize jobs (arrival_time, service_time)
+    # initialize job rerference array (this array will be fixed) from arrival arrays
     for i in range(n_jobs):
         jobs[i+1]={"arrival":arrival[i],"service":service[i]}
     
-    # initialize arrival events (arrival_time, event_type, {event_type, related_id}) 
+    # initialize arrival events (arrival_time, event_type, related_id) 
     for id in jobs:
         heapq.heappush(events, [jobs[id]['arrival'], 'arrival', id ] )
 
-    # print(servers)
-    # print(jobs)
-    # print(events)
-    
     while len(events)!=0:
+        # pop out a event which has soonest starting time 
         [e_time, e_type, e_id]=heapq.heappop(events)
+        
+        # update master clock
         clock=e_time
 
         assert(number_setup_servers(servers)==number_marked_jobs(queue))
-
+        
+        # stop simulaion when time exceeds time end
         if (mode == 'random') and (clock>time_end):
             break
+        
+        # handle arrival event
         if e_type=='arrival':
             job_id = e_id
             free_server_id = find_longest_server_type(servers,events,'delay')
@@ -134,6 +137,7 @@ def simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end,
             else:
                 use_delay_server(clock,servers,jobs,events,free_server_id,job_id)
         
+        # handle departure event
         if e_type=='departure':
             [server_id, job_id] = e_id
             departures.append([jobs[job_id]['arrival'],clock])
@@ -154,20 +158,23 @@ def simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end,
                     else:
                         unmarked_job['status'] = 'MARKED'
 
+        # handle setup event
         if e_type=='setup':
             server_id = e_id
             job = pop_first_marked(queue)
             use_free_server(clock,servers,jobs,events, server_id, job['id'])
         
+        # handle delay event
         if e_type=='delay':
             server_id=e_id
             servers[server_id]['status']='off'
-    #output 2 files
+    
 
     running_times = []
     running_means = []
     response_times = []
 
+    
     for departure in departures:
         response_times.append(departure[1] - departure[0])
     
@@ -191,8 +198,7 @@ def simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end,
         with open('mrt_{0}.txt'.format(test_no), 'w') as output_file:
             output_file.write("{0:.3f}".format(mean_response_time))
 
-    
-     
+
     departures.sort(key=lambda x: x[1])
 
     if WRITE_FILE:
@@ -200,14 +206,5 @@ def simulation(mode, arrival, service, m, setup_time, delayedoff_time, time_end,
         for i in range(n_finish_jobs):
             output_file.write("{0:.3f}\t{1:.3f}\n".format(departures[i][0],departures[i][1]))
         output_file.close() 
-
-    # print("Depatures:")
-    # print("Response times:")
-    # for response_time in response_times:
-    #     print ("{0:.3f}".format(response_time))
-
-    # print("Running means:")
-    # for running_mean in running_means:
-    #     print ("{0:.3f}".format(running_mean))
 
     return  (n_finish_jobs,mean_response_time,response_times,running_means)
