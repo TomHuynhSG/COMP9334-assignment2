@@ -1,0 +1,69 @@
+Test 1
+Mode: random
+Number of Servers: 5
+Setup time: 5.0
+Delayed off time: 0.1
+Time end: 20000.0
+Arrival rate: 0.35
+Service rate: 1.0
+SEED: 5
+SEED: 6
+SEED: 7
+SEED: 8
+SEED: 9
+SEED: 10
+SEED: 11
+SEED: 12
+SEED: 13
+SEED: 14
+SEED: 15
+SEED: 16
+SEED: 17
+SEED: 18
+SEED: 19
+SEED: 20
+SEED: 21
+SEED: 22
+SEED: 23
+SEED: 24
+SEED: 25
+Spread difference from the baseline
+Tc :0.1
+Lower Bound:0.0
+Sample Mean0.0
+Upper Bound0.0
+Spread difference from the baseline
+Tc :8
+Lower Bound:-1.8404689560258796
+Sample Mean-1.8261273138237284
+Upper Bound-1.8117856716215772
+Spread difference from the baseline
+Tc :9
+Lower Bound:-1.9395436804948856
+Sample Mean-1.9267133789520579
+Upper Bound-1.9138830774092301
+Spread difference from the baseline
+Tc :10
+Lower Bound:-2.0382044606555874
+Sample Mean-2.0247180223189054
+Upper Bound-2.0112315839822235
+Spread difference from the baseline
+Tc :11
+Lower Bound:-2.1141900099822313
+Sample Mean-2.09958386003637
+Upper Bound-2.084977710090509
+Spread difference from the baseline
+Tc :12
+Lower Bound:-2.1792541959723657
+Sample Mean-2.165670187678878
+Upper Bound-2.1520861793853907
+Spread difference from the baseline
+Tc :15
+Lower Bound:-2.34174246980067
+Sample Mean-2.327246259839346
+Upper Bound-2.3127500498780225
+Spread difference from the baseline
+Tc :20
+Lower Bound:-2.516517782000696
+Sample Mean-2.5006415993613147
+Upper Bound-2.4847654167219333

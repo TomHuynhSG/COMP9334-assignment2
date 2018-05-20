@@ -1,6 +1,6 @@
 # Name: Nguyen Minh Thong Huynh
 # ID: z5170141
-# Python 3.6.4
+# Python 3.6.4 or Python 2.7.13
 
 import os, simulation as si
 import math
@@ -33,6 +33,9 @@ np.random.seed(seed_start)
 
 #max index where transident part will be remove from response time array
 transient_cutoff_max=1500
+
+# Folder sample path - IMPORTANT
+SAMPLE_FOLDER_NAME = "\sample_3"
 
 # debug allowing functions to print out variable for debugging purpose
 DEBUG = False
@@ -78,7 +81,7 @@ def read_file_float(file_name):
     return content
 
 def main():
-    os.chdir(os.getcwd()+"\sample_2")
+    os.chdir(os.getcwd()+SAMPLE_FOLDER_NAME)
     
     no_tests = int(read_file_float("num_tests.txt")[0])
     for test in range(1,no_tests+1):

@@ -1,6 +1,6 @@
 # Name: Nguyen Minh Thong Huynh
 # ID: z5170141
-# Python 3.6.4
+# Python 3.6.4 or Python 2.7.13
 
 ###################################################################################################
 # This is helper simulation file for wrapper.py
